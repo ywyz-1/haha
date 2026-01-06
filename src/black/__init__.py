@@ -1,3 +1,4 @@
+# 1. 基础模块导入：提供IO、JSON处理、系统交互等核心能力
 import io
 import json
 import platform
