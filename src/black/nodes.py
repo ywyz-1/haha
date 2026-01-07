@@ -144,7 +144,14 @@ RARROW = 55
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class Visitor(Generic[T]):
-    """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
+    """
+       设计模式：访问者模式（行为型设计模式）
+       核心意图：将 AST 节点的"遍历逻辑"与"处理逻辑"分离，支持灵活扩展
+       设计优势：新增节点处理操作时，无需修改节点类本身，仅需扩展该访问者类
+       适用场景：Black 中对不同类型 AST 节点（函数定义、表达式、赋值语句等）的格式化处理
+      """
+      
+  
 
     def visit(self, node: LN) -> Iterator[T]:
         """Main method to visit `node` and its children.
@@ -155,6 +162,15 @@ class Visitor(Generic[T]):
         instead.
 
         Then yields objects of type `T` from the selected visitor.
+        """
+        """
+                核心分发方法：根据节点类型动态匹配对应的处理函数
+                执行逻辑：
+                1. 获取节点的类型名称（如 FunctionDef、Assign、Leaf）
+                2. 构造处理函数名（如 visit_FunctionDef、visit_Leaf）
+                3. 查找当前类中定义的处理函数，若存在则调用，否则执行默认处理
+                输入参数：node - 待处理的 AST 节点（Node 为复合节点，Leaf 为叶子节点）
+                返回值：处理后的结果（如格式化后的代码片段、节点属性等）
         """
         if node.type < 256:
             name = token.tok_name[node.type]
@@ -171,6 +187,11 @@ class Visitor(Generic[T]):
             yield from self.visit_default(node)
 
     def visit_default(self, node: LN) -> Iterator[T]:
+        """
+               默认处理方法：处理未定义专属处理函数的节点
+               执行逻辑：遍历复合节点的所有子节点，递归调用 visit 方法
+               作用：保证 AST 树的完整遍历，避免遗漏未处理节点
+               """
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Node):
             for child in node.children:
